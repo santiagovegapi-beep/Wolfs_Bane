@@ -1,0 +1,42 @@
+﻿# ==========================================
+# Archivos específicos de tu proyecto Django
+# ==========================================
+
+# Base de datos local (Evita subir tus pruebas locales)
+db.sqlite3
+
+# Variables de entorno y contraseñas (¡CRÍTICO por seguridad!)
+.env
+
+# Archivos multimedia subidos por usuarios (Películas, ZIPs, Portadas)
+media/
+
+# Archivos temporales de Python (Compilados automáticos)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ==========================================
+# Configuración de Tailwind CSS (App: theme)
+# ==========================================
+
+# Dependencias pesadas de JavaScript/Node para Tailwind
+**/node_modules/
+
+# Archivos de caché de Tailwind/PostCSS
+.postcss-cache/
+
+# ==========================================
+# Archivos del Entorno Virtual (Por si acaso)
+# ==========================================
+venv/
+env/
+ENV/
+
+# ==========================================
+# Archivos del Sistema Operativo
+# ==========================================
+Thumbs.db
+Desktop.ini
+.DS_Store

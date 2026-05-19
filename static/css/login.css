@@ -1,0 +1,83 @@
+body {
+    background-color: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9));
+    background-image: url("/static/img/Registro_login.jpg");   /* Imagen fondo */
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    color: #e0e0e0;
+}
+
+.login-card {
+    background: rgba(20, 20, 30, 0.95);
+    border: 2px solid #8e24aa;
+    border-radius: 15px;
+    box-shadow: 0 0 40px rgba(142, 36, 170, 0.6);
+    max-width: 420px;
+    width: 100%;
+}
+
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    color: #c026d3;
+    text-shadow: 0 0 20px #c026d3;
+}
+
+.btn-login {
+    background: linear-gradient(45deg, #8e24aa, #c026d3);
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 12px;
+    transition: all 0.3s;
+}
+
+.btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(192, 38, 211, 0.5);
+}
+
+.form-control {
+    background-color: #1a1a2e !important;
+    border-color: #8e24aa;
+    color: #d3d2d2;
+}
+
+.form-control:focus {
+    border-color: #c026d3;
+    box-shadow: 0 0 0 0.2rem rgba(191, 38, 211, 0.719);
+    color: #ffffff;
+}
+
+.border-purple::placeholder {
+    color: #b3b4b3; 
+    opacity: 1;
+}
+
+.text-purple {
+    color: #c026d3;
+}
+
+.text-purple:hover {
+    color: #e879f9;
+}
+
+.alert-danger {
+    border-left: 4px solid #ff4444 !important; /* Una línea roja vibrante a la izquierda */
+    font-family: 'Roboto', sans-serif;
+    animation: shake 0.5s; /* Un pequeño efecto de vibración al aparecer */
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}

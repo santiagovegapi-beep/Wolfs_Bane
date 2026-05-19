@@ -1,0 +1,382 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Wolf's Bane{% endblock %}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="{% static 'css/home.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .neon-text {
+            text-shadow:
+                0 0 5px #c026d3,
+                0 0 15px #c026d3,
+                0 0 30px #8b21d1,
+                0 0 50px #8b21d1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .fade-out {
+            animation: fadeOut 0.4s ease forwards;
+        }
+
+        .close-message {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .close-message:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200 font-sans">
+
+    <!-- HEADER -->
+    <header class="border-b border-purple-900 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'img/Logo.png' %}" alt="Logo" class="w-8 h-8 md:w-10 md:h-10">
+                    <h1 class="text-xl md:text-3xl font-bold tracking-widest text-purple-400 neon-text">WOLF'S BANE</h1>
+                </div>
+
+                <!-- Menú Desktop -->
+                <nav class="hidden lg:flex items-center gap-8 text-sm">
+
+                    <!-- Links principales -->
+                    <div class="flex items-center gap-6 font-medium">
+
+                        <a href="{% url 'usuarios:home' %}"
+                        class="hover:text-purple-400 transition">
+                            Inicio
+                        </a>
+
+                        <a href="{% url 'contenido:lista_todos' %}"
+                        class="hover:text-purple-400 transition">
+                            Catálogo
+                        </a>
+
+                        <a href="{% url 'contenido:lista_videojuegos' %}"
+                        class="hover:text-purple-400 transition">
+                            Juegos
+                        </a>
+
+                        <a href="{% url 'contenido:lista_peliculas' %}"
+                        class="hover:text-purple-400 transition">
+                            Películas
+                        </a>
+
+                        <a href="{% url 'contenido:lista_series' %}"
+                        class="hover:text-purple-400 transition">
+                            Series
+                        </a>
+
+                        {% if user.is_authenticated and user.es_desarrollador %}
+                            <a href="{% url 'contenido:mis_creaciones' %}"
+                            class="hover:text-fuchsia-400 transition">
+                                ✨ Mis Creaciones
+                            </a>
+
+                            <a href="{% url 'social:mi_biblioteca' %}"
+                            class="hover:text-fuchsia-400 transition">
+                                Mi Biblioteca
+                            </a>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user.es_moderador %}
+                            <a href="{% url 'contenido:panel_moderacion' %}"
+                            class="text-yellow-400 hover:text-yellow-300 transition">
+                                Moderación
+                            </a>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Acciones usuario -->
+                    <div class="flex items-center gap-4 border-l border-purple-800/50 pl-6">
+
+                        {% if user.is_authenticated %}
+
+                            {% if user.es_desarrollador %}
+                                <a href="{% url 'contenido:subir_contenido' %}"
+                                class="bg-gradient-to-r from-purple-600 to-fuchsia-600
+                                        hover:from-purple-700 hover:to-fuchsia-700
+                                        px-5 py-2 rounded-full font-semibold
+                                        transition shadow-lg">
+                                    Subir Contenido
+                                </a>
+                            {% endif %}
+
+                            {% if user.is_superuser %}
+                                <a href="{% url 'admin:index' %}"
+                                class="border border-amber-500 text-amber-400
+                                        hover:bg-amber-500 hover:text-black
+                                        px-4 py-2 rounded-full
+                                        transition font-medium">
+                                    Django DB
+                                </a>
+                            {% endif %}
+
+                            <!-- Usuario -->
+                            <div class="flex items-center gap-3">
+
+                                <div class="text-right leading-tight">
+
+                                    <p class="text-xs text-purple-300">
+                                        {{ user.username }}
+                                    </p>
+
+                                    {% if user.is_superuser %}
+                                        <span class="text-[10px] uppercase font-bold text-amber-400">
+                                            SuperUser
+                                        </span>
+
+                                    {% elif user.es_moderador %}
+                                        <span class="text-[10px] uppercase font-bold text-yellow-400">
+                                            Moderador
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 border-l border-purple-800/50 pl-6">
+                                <form method="post"
+                                    action="{% url 'usuarios:logout' %}">
+                                    {% csrf_token %}
+
+                                    <button type="submit"
+                                            class="text-red-400 hover:text-red-500
+                                                transition text-sm font-medium">
+                                        Salir
+                                    </button>
+                                </form>
+                            </div>
+
+                        {% else %}
+
+                            <a href="{% url 'usuarios:login' %}"
+                            class="bg-purple-600 hover:bg-purple-700
+                                    px-5 py-2 rounded-full
+                                    font-semibold transition">
+                                Iniciar Sesión
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+                </nav>
+
+                <!-- Hamburguesa Móvil -->
+                <div class="lg:hidden">
+                    <button id="mobile-menu-button" class="text-purple-400 focus:outline-none">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Menú Móvil -->
+            <div id="mobile-menu"
+                class="hidden lg:hidden mt-4 border-t border-purple-900/50 pt-5 px-2">
+
+                <nav class="flex flex-col gap-2 text-sm font-medium">
+
+                    <a href="{% url 'usuarios:home' %}"
+                    class="px-4 py-3 rounded-xl hover:bg-purple-900/30 hover:text-purple-300 transition">
+                        Inicio
+                    </a>
+
+                    <a href="{% url 'contenido:lista_todos' %}"
+                    class="px-4 py-3 rounded-xl hover:bg-purple-900/30 hover:text-purple-300 transition">
+                        Catálogo
+                    </a>
+
+                    <a href="{% url 'contenido:lista_videojuegos' %}"
+                    class="px-4 py-3 rounded-xl hover:bg-purple-900/30 hover:text-purple-300 transition">
+                        Juegos
+                    </a>
+
+                    <a href="{% url 'contenido:lista_peliculas' %}"
+                    class="px-4 py-3 rounded-xl hover:bg-purple-900/30 hover:text-purple-300 transition">
+                        Películas
+                    </a>
+
+                    <a href="{% url 'contenido:lista_series' %}"
+                    class="px-4 py-3 rounded-xl hover:bg-purple-900/30 hover:text-purple-300 transition">
+                        Series
+                    </a>
+
+                    {% if user.is_authenticated %}
+
+                        {% if user.es_desarrollador %}
+                            <a href="{% url 'contenido:mis_creaciones' %}"
+                            class="px-4 py-3 rounded-xl bg-purple-900/20 text-purple-300 hover:bg-purple-900/40 transition">
+                                ✨ Mis Creaciones
+                            </a>
+
+                            <a href="{% url 'social:mi_biblioteca' %}"
+                            class="px-4 py-3 rounded-xl bg-purple-900/20 text-purple-300 hover:bg-purple-900/40 transition">
+                                Mi Biblioteca
+                            </a>
+
+                            <a href="{% url 'contenido:subir_contenido' %}"
+                            class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold hover:scale-[1.01] transition">
+                                Subir Contenido
+                            </a>
+
+                        {% endif %}
+
+                        {% if user.es_moderador %}
+                            <a href="{% url 'contenido:panel_moderacion' %}"
+                            class="px-4 py-3 rounded-xl bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/20 transition">
+                                Gestión de contenido
+                            </a>
+                        {% endif %}
+
+                        {% if user.is_superuser %}
+                            <a href="{% url 'admin:index' %}"
+                            class="px-4 py-3 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition">
+                                Django DB
+                            </a>
+                        {% endif %}
+
+                        <div class="mt-4 pt-4 border-t border-purple-900/30">
+                            <p class="text-xs text-purple-300 mb-3">
+                                Conectado como:
+                                <strong>{{ user.username }}</strong>
+                            </p>
+
+                            <form method="post" action="{% url 'usuarios:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="w-full text-left px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition">
+                                    Cerrar Sesión
+                                </button>
+                            </form>
+                        </div>
+
+                    {% else %}
+                        <a href="{% url 'usuarios:login' %}"
+                        class="px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold transition">
+                            Iniciar Sesión
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- MENSAJES DJANGO -->
+    {% if messages %}
+        <div id="messages-container" class="fixed top-24 right-5 z-[9999] space-y-3">
+            {% for message in messages %}
+                <div class="
+                    message-alert
+                    px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-md
+                    text-sm font-medium min-w-[280px] max-w-sm
+                    animate-fade-in
+                    {% if message.tags == 'error' %}
+                        bg-red-950/90 border-red-500 text-red-200
+                    {% elif message.tags == 'success' %}
+                        bg-emerald-950/90 border-emerald-500 text-emerald-200
+                    {% elif message.tags == 'warning' %}
+                        bg-yellow-950/90 border-yellow-500 text-yellow-200
+                    {% else %}
+                        bg-zinc-900/90 border-purple-600 text-purple-200
+                    {% endif %}
+                ">
+                    <div class="flex items-start justify-between gap-4">
+                        <span>{{ message }}</span>
+
+                        <button class="close-message text-lg leading-none opacity-70 hover:opacity-100">
+                            ×
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+        btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionamos todas las alertas
+            const messages = document.querySelectorAll('.message-alert');
+
+            messages.forEach(function(message) {
+                // 1. Lógica para el botón de cerrar (la "X")
+                const closeBtn = message.querySelector('.close-message');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        dismissMessage(message);
+                    });
+                }
+
+                // 2. Lógica para desaparición automática tras 5 segundos (5000ms)
+                setTimeout(() => {
+                    dismissMessage(message);
+                }, 5000);
+            });
+
+            // Función auxiliar para aplicar la animación de salida y eliminar el elemento
+            function dismissMessage(el) {
+                if (el && !el.classList.contains('fade-out')) {
+                    el.classList.add('fade-out');
+                    // Esperamos a que termine la animación de CSS (400ms según tu estilo)
+                    el.addEventListener('animationend', () => {
+                        el.remove();
+                    });
+                }
+            }
+        });
+    </script>
+
+    {% block content %}{% endblock %}
+
+    <footer class="bg-black py-12 text-center text-sm border-t border-purple-900">
+        <p>© 2026 Wolf's Bane - Todos los derechos reservados</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

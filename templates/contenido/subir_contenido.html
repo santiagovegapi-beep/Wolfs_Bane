@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subir Contenido - Wolf's Bane{% endblock %}
+
+{% block extra_css %}
+<style>
+    .subir-page {
+        background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.72)), 
+                    url('{% static "img/Principal.jpg" %}') center/cover no-repeat;
+        min-height: 100vh;
+    }
+    .form-container {
+        background-color: rgba(24, 24, 27, 0.92);
+        backdrop-filter: blur(12px);
+    }
+    .season-card, .episode-card {
+        transition: all 0.3s ease;
+    }
+    .season-card:hover, .episode-card:hover {
+        border-color: #c026d3;
+    }
+    /* Estilo para resaltar campos con error nativo o personalizado */
+    .campo-invalido {
+        border-color: #f87171 !important;
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="subir-page">
+    <section class="pt-24 pb-12 text-center">
+        <div class="max-w-4xl mx-auto px-6">
+            <h1 class="text-5xl md:text-6xl font-bold tracking-wider neon-text mb-4">
+                SUBIR CONTENIDO
+            </h1>
+            <p class="text-xl text-purple-300">Comparte tu creación con la comunidad</p>
+        </div>
+    </section>
+
+    <section class="pb-20">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="form-container rounded-3xl p-10 border border-purple-700/50 shadow-2xl">
+                
+                <form method="POST" enctype="multipart/form-data" id="mainForm" class="space-y-10" novalidate>
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        {{ form.tipo_contenido.label_tag }}
+                        {{ form.tipo_contenido }}
+                        <p class="error-msg text-red-400 text-xs mt-1 hidden">Por favor, selecciona un tipo de contenido.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            {{ form.titulo.label_tag }}
+                            {{ form.titulo }}
+                            <p class="error-msg text-red-400 text-xs mt-1 hidden">El título es obligatorio.</p>
+                        </div>
+                        <div class="form-group">
+                            {{ form.genero.label_tag }}
+                            {{ form.genero }}
+                            <p class="error-msg text-red-400 text-xs mt-1 hidden">Elige un género para tu contenido.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.descripcion.label_tag }}
+                        {{ form.descripcion }}
+                        <p class="error-msg text-red-400 text-xs mt-1 hidden">Escribe una breve descripción.</p>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.portada.label_tag }}
+                        {{ form.portada }}
+                        <p class="error-msg text-red-400 text-xs mt-1 hidden">La portada es obligatoria para mostrar tu creación en el catálogo.</p>
+                    </div>
+
+                    <div id="campos-especificos"></div>
+
+                    <button type="submit" 
+                            class="w-full mt-10 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 
+                                   py-5 rounded-2xl text-xl font-bold transition transform hover:scale-[1.02]">
+                        Subir Contenido
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const mainForm = document.getElementById('mainForm');
+const tipoSelect = document.getElementById('id_tipo_contenido');
+const camposDiv = document.getElementById('campos-especificos');
+let seasonCounter = 1;
+
+// ==================== PLANTILLAS HTML REUTILIZABLES CON MENSAJES DE ERROR ====================
+function crearTemporadaHTML(index) {
+    return `
+        <div class="season-card bg-zinc-900 border border-purple-700 rounded-2xl p-6 mb-6" data-season="${index}">
+            <div class="flex justify-between mb-4">
+                <h3 class="text-xl font-bold text-purple-400">Temporada ${index}</h3>
+                ${index > 1 ? `<button type="button" class="remove-season text-red-400 hover:text-red-500 text-sm">Eliminar Temporada</button>` : ''}
+            </div>
+            
+            <div class="form-group">
+                <input type="text" name="temporada_titulo_${index}" placeholder="Título de la temporada (opcional)" 
+                       class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 mb-2">
+            </div>
+
+            <button type="button" class="add-episode-btn w-full bg-fuchsia-600 hover:bg-fuchsia-700 py-3 rounded-xl mb-4"
+                    data-season="${index}">
+                + Agregar Episodio
+            </button>
+
+            <div class="episodes-container space-y-4" data-season="${index}"></div>
+        </div>`;
+}
+
+function crearEpisodioHTML(seasonId, episodeNum) {
+    return `
+        <div class="episode-card bg-zinc-800 border border-purple-600/50 rounded-xl p-5">
+            <h4 class="font-semibold mb-3 text-zinc-300">Episodio ${episodeNum}</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <input type="text" name="ep_titulo_${seasonId}_${episodeNum}" placeholder="Título del episodio" required
+                           class="w-full bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2 text-white">
+                    <p class="error-msg text-red-400 text-xs mt-1 hidden">Ingresa el título del episodio.</p>
+                </div>
+                <div class="form-group">
+                    <input type="number" name="ep_duracion_${seasonId}_${episodeNum}" placeholder="Duración (min)" required
+                           class="w-full bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2 text-white">
+                    <p class="error-msg text-red-400 text-xs mt-1 hidden">Ingresa la duración.</p>
+                </div>
+            </div>
+            <div class="form-group mt-4">
+                <textarea name="ep_desc_${seasonId}_${episodeNum}" rows="2" placeholder="Descripción del episodio" required
+                          class="w-full bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2 text-white"></textarea>
+                <p class="error-msg text-red-400 text-xs mt-1 hidden">La descripción del episodio es requerida.</p>
+            </div>
+            <div class="form-group mt-3">
+                <input type="file" name="ep_archivo_${seasonId}_${episodeNum}" class="w-full text-sm text-zinc-400" ${seasonId == 1 && episodeNum == 1 ? 'required' : ''}>
+                <p class="error-msg text-red-400 text-xs mt-1 hidden">Debes subir el archivo de video para este episodio.</p>
+            </div>
+        </div>`;
+}
+
+// ==================== MANEJO DINÁMICO DE INTERFAZ ====================
+function actualizarCampos() {
+    const tipo = tipoSelect.value;
+    let html = '';
+
+    if (tipo === 'videojuego') {
+        html = `
+        <div class="bg-zinc-900/70 border border-purple-700 rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-purple-400 mb-6">Configuración del Videojuego</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label class="block mb-3 text-purple-300 font-medium">Precio ($)</label>
+                    <input type="number" step="0.01" name="precio" required class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-fuchsia-500 transition">
+                    <p class="error-msg text-red-400 text-xs mt-1 hidden">Ingresa un precio válido (usa 0 si es gratis).</p>
+                </div>
+                <div class="form-group">
+                    <label class="block mb-3 text-purple-300 font-medium">Versión</label>
+                    <input type="text" name="version" value="1.0" required class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-fuchsia-500 transition">
+                    <p class="error-msg text-red-400 text-xs mt-1 hidden">Especifica la versión inicial (ej: 1.0).</p>
+                </div>
+            </div>
+            <div class="mt-8 form-group">
+                <label class="block mb-3 text-purple-300 font-medium">Archivo ZIP del Juego</label>
+                <input type="file" name="archivo_descarga" required class="w-full bg-zinc-800 border border-dashed border-purple-600 rounded-xl px-5 py-4 text-zinc-300 file:bg-purple-600 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-lg file:mr-4 hover:border-fuchsia-500 transition">
+                <p class="error-msg text-red-400 text-xs mt-1 hidden">Es obligatorio subir el paquete comprimido (.ZIP) de tu videojuego.</p>
+            </div>
+        </div>`;
+    }
+
+    else if (tipo === 'pelicula') {
+        html = `
+        <div class="bg-zinc-900/70 border border-purple-700 rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-purple-400 mb-6">Configuración de la Película</h2>
+            <div class="mt-8 form-group">
+                <label class="block mb-3 text-purple-300 font-medium">Archivo de Video</label>
+                <input type="file" name="archivo_pelicula" required class="w-full bg-zinc-800 border border-dashed border-purple-600 rounded-xl px-5 py-4 text-zinc-300 file:bg-purple-600 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-lg file:mr-4 hover:border-fuchsia-500 transition">
+                <p class="error-msg text-red-400 text-xs mt-1 hidden">Selecciona el archivo de video oficial de la película.</p>
+            </div>
+        </div>`;
+    }
+
+    else if (tipo === 'serie') {
+        seasonCounter = 1;
+        html = `
+        <div class="bg-zinc-900/70 border border-purple-700 rounded-2xl p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-purple-400">Estructura de la Serie</h2>
+                <button type="button" id="add-season-btn" class="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-6 py-3 rounded-xl font-bold transition transform hover:scale-105 text-sm">
+                    + Añadir Temporada
+                </button>
+            </div>
+            <div id="seasons-container" class="space-y-6"></div>
+        </div>`;
+    }
+
+    camposDiv.innerHTML = html;
+
+    if (tipo === 'serie') {
+        const container = document.getElementById('seasons-container');
+        container.insertAdjacentHTML('beforeend', crearTemporadaHTML(seasonCounter));
+        
+        const epContainer = document.querySelector(`.episodes-container[data-season="${seasonCounter}"]`);
+        epContainer.insertAdjacentHTML('beforeend', crearEpisodioHTML(seasonCounter, 1));
+        
+        const mainFileInput = epContainer.querySelector('input[type="file"]');
+        if (mainFileInput) {
+            mainFileInput.setAttribute('name', 'archivo');
+            // Personalizamos el mensaje de error para el primer archivo de la serie
+            const errorText = mainFileInput.closest('.form-group').querySelector('.error-msg');
+            if(errorText) errorText.innerText = "Falta que coloques el video del primer episodio para iniciar la serie.";
+        }
+        
+        seasonCounter++;
+    }
+    
+    // Adjuntar escuchadores en tiempo real a los nuevos elementos generados
+    agregarValidadoresEnTiempoReal();
+}
+
+// ==================== SISTEMA DE VALIDACIÓN EN TIEMPO REAL ====================
+function validarCampo(input) {
+    const formGroup = input.closest('.form-group');
+    if (!formGroup) return true;
+    
+    const errorMsg = formGroup.querySelector('.error-msg');
+    let esValido = true;
+
+    if (input.hasAttribute('required')) {
+        if (input.type === 'file') {
+            esValido = input.files.length > 0;
+        } else {
+            esValido = input.value.trim() !== "";
+        }
+    }
+
+    if (!esValido) {
+        input.classList.add('campo-invalido');
+        if (errorMsg) errorMsg.classList.remove('hidden');
+    } else {
+        input.classList.remove('campo-invalido');
+        if (errorMsg) errorMsg.classList.add('hidden');
+    }
+    return esValido;
+}
+
+function agregarValidadoresEnTiempoReal() {
+    // Escucha cambios en inputs, selectores y textareas
+    const elementos = mainForm.querySelectorAll('input, select, textarea');
+    elementos.forEach(elem => {
+        elem.removeEventListener('input', () => validarCampo(elem));
+        elem.removeEventListener('change', () => validarCampo(elem));
+        
+        elem.addEventListener('input', () => validarCampo(elem));
+        elem.addEventListener('change', () => validarCampo(elem));
+    });
+}
+
+// ==================== INTERCEPCIÓN DEL ENVÍO (SUBMIT) ====================
+mainForm.addEventListener('submit', function(e) {
+    const inputs = mainForm.querySelectorAll('input, select, textarea');
+    let formularioCorrecto = true;
+    let primerInvalido = null;
+
+    inputs.forEach(input => {
+        // Ignoramos inputs ocultos como el token csrf
+        if (input.type !== 'hidden') {
+            const campoValido = validarCampo(input);
+            if (!campoValido) {
+                formularioCorrecto = false;
+                if (!primerInvalido) primerInvalido = input;
+            }
+        }
+    });
+
+    if (!formularioCorrecto) {
+        e.preventDefault(); // Detiene el envío por completo
+        
+        // Hace un scroll suave automático hacia el primer campo vacío o con error
+        if (primerInvalido) {
+            primerInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            primerInvalido.focus();
+        }
+    }
+});
+
+// ==================== DELEGACIÓN GLOBAL DE EVENTOS ====================
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'add-season-btn') {
+        const container = document.getElementById('seasons-container');
+        if (container) {
+            container.insertAdjacentHTML('beforeend', crearTemporadaHTML(seasonCounter));
+            const epContainer = document.querySelector(`.episodes-container[data-season="${seasonCounter}"]`);
+            epContainer.insertAdjacentHTML('beforeend', crearEpisodioHTML(seasonCounter, 1));
+            seasonCounter++;
+            agregarValidadoresEnTiempoReal(); // Re-indexa los nuevos campos al sistema de validación
+        }
+    }
+
+    if (e.target && e.target.classList.contains('add-episode-btn')) {
+        const seasonId = e.target.dataset.season;
+        const container = document.querySelector(`.episodes-container[data-season="${seasonId}"]`);
+        const episodeNum = container.children.length + 1;
+        container.insertAdjacentHTML('beforeend', crearEpisodioHTML(seasonId, episodeNum));
+        agregarValidadoresEnTiempoReal(); // Re-indexa
+    }
+
+    if (e.target && e.target.classList.contains('remove-season')) {
+        if (confirm('¿Eliminar esta temporada y todos sus episodios?')) {
+            e.target.closest('.season-card').remove();
+        }
+    }
+});
+
+// Inicializadores iniciales
+tipoSelect.addEventListener('change', actualizarCampos);
+window.addEventListener('load', actualizarCampos);
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Contenido - Wolf's Bane{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-20">
+    <div class="bg-zinc-900 rounded-3xl p-10 border border-red-900">
+        <h1 class="text-3xl font-bold text-red-400 mb-6">¿Eliminar este contenido?</h1>
+        
+        <div class="bg-zinc-800 rounded-2xl p-6 mb-8">
+            <h2 class="text-xl font-semibold">{{ contenido.titulo }}</h2>
+            <p class="text-zinc-400 mt-2">
+                Tipo: 
+                {% if contenido.videojuego %}Videojuego{% elif contenido.pelicula %}Película{% elif contenido.serie %}Serie{% endif %}
+            </p>
+        </div>
+
+        <p class="text-zinc-300 mb-8">
+            Esta acción <strong class="text-red-400">no se puede deshacer</strong>. 
+            Se eliminará el contenido, sus archivos, estadísticas y comentarios asociados.
+        </p>
+
+        <form method="POST" class="flex gap-4">
+            {% csrf_token %}
+            <button type="submit" 
+                    class="flex-1 bg-red-600 hover:bg-red-700 py-4 rounded-2xl font-bold text-lg transition">
+                Sí, Eliminar Contenido
+            </button>
+            <a href="{% url 'contenido:mis_creaciones' %}" 
+               class="flex-1 text-center bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl font-bold text-lg transition">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

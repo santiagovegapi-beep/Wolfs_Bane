@@ -1,0 +1,41 @@
+/* Scroll suave para los enlaces de ancla (ej: "Explorar Catálogo") */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Personalización de la barra de desplazamiento (Scrollbar) */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #09090b; /* zinc-950 (fondo de tu página) */
+}
+::-webkit-scrollbar-thumb {
+    background: #7e22ce; /* purple-600 */
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a21caf; /* fuchsia-600 */
+}
+
+/* Efecto de texto neón mejorado */
+.neon-text {
+    text-shadow: 
+        0 0 5px #c026d3, 
+        0 0 15px #c026d3, 
+        0 0 30px #8b21d1, 
+        0 0 50px #8b21d1;
+}
+
+/* Animación y sombreado para las tarjetas (Cards) */
+.card-hover {
+    transition: all 0.3s ease-in-out;
+    border: 1px solid transparent;
+}
+
+.card-hover:hover {
+    transform: translateY(-8px);
+    /* Le cambié la sombra negra por un brillo morado sutil */
+    box-shadow: 0 15px 30px -5px rgba(192, 38, 211, 0.25);
+    border-color: rgba(192, 38, 211, 0.4);
+}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar - {{ contenido.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-page {
+        background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), 
+                    url('{% static "img/Principal.jpg" %}') center/cover;
+        min-height: 100vh;
+    }
+    .season-card, .episode-card {
+        transition: all 0.3s ease;
+    }
+    .season-card:hover, .episode-card:hover {
+        border-color: #c026d3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    <div class="max-w-4xl mx-auto px-6 mb-4">
+        {% for message in messages %}
+            <div class="p-4 rounded-xl {% if message.tags == 'success' %}bg-emerald-500/20 text-emerald-400 border border-emerald-500{% else %}bg-red-500/20 text-red-400 border border-red-500{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="edit-page py-12">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="bg-zinc-900 rounded-3xl p-10 border border-purple-700">
+            
+            <h1 class="text-4xl font-bold mb-2">Editar Contenido</h1>
+            <h2 class="text-purple-400 text-2xl mb-10">{{ contenido.titulo }}</h2>
+
+            {% if form.errors %}
+                <div class="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl mb-6">
+                    <strong>Error en el formulario:</strong>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <form method="POST" enctype="multipart/form-data" id="editForm" class="space-y-10">
+                {% csrf_token %}
+
+                <!-- Información básica -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>{{ form.titulo.label_tag }}{{ form.titulo }}</div>
+                    <div>{{ form.genero.label_tag }}{{ form.genero }}</div>
+                </div>
+
+                <div>
+                    {{ form.descripcion.label_tag }}
+                    {{ form.descripcion }}
+                </div>
+
+                <!-- Portada -->
+                <div>
+                    {{ form.portada.label_tag }}
+                    {{ form.portada }}
+                    {% if contenido.portada %}
+                        <p class="text-xs text-zinc-400 mt-1">Actual: {{ contenido.portada.name }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Campos específicos según tipo -->
+                {% if contenido.videojuego %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-zinc-400 text-sm mb-2 block">Precio actual ($)</label>
+                        <input type="number" step="0.01" name="precio"
+                                value="{{ contenido.videojuego.precio|floatformat:2 }}"
+                                class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white">
+                    </div>
+                    <div>
+                        <label class="text-zinc-400 text-sm mb-2 block">Versión instalada</label>
+                        <input type="text" name="version" 
+                                value="{{ contenido.videojuego.version }}"
+                                placeholder="Ej: 1.0.2"
+                                class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white">
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-zinc-800/50 p-6 rounded-2xl border border-dashed border-purple-500/50">
+                    <label class="block mb-2 text-purple-400 font-semibold">Archivo del juego (.zip)</label>
+                    <input type="file" name="archivo_descarga" class="w-full text-zinc-300">
+                    
+                    {% if contenido.videojuego.archivo_descarga %}
+                        <div class="flex items-center gap-3 mt-4 p-3 bg-zinc-900 rounded-lg">
+                            <span class="text-emerald-400">●</span>
+                            <p class="text-xs text-zinc-400">
+                                Archivo actual: <span class="text-purple-300">{{ contenido.videojuego.archivo_descarga.name }}</span>
+                                <br>
+                                Peso detectado: <span class="text-white">{{ contenido.videojuego.tamañoArchivo }} GB</span>
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if contenido.pelicula %}
+                <div>
+                    <label>Duración (minutos)</label>
+                    <input type="number" name="duracion" value="{{ contenido.pelicula.duracion }}" 
+                           class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3">
+                </div>
+                {% endif %}
+
+                <!-- ====================== SERIES: TEMPORADAS Y EPISODIOS ====================== -->
+                {% if es_serie %}
+                <div>
+                    <h2 class="text-2xl font-bold text-purple-400 mb-6">Temporadas y Episodios</h2>
+                    <button type="button" id="add-season-btn" 
+                            class="mb-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-medium">
+                        + Nueva Temporada
+                    </button>
+                    <div id="seasons-container" class="space-y-8"></div>
+                </div>
+                {% endif %}
+
+                <div class="flex gap-4 pt-8">
+                    <button type="submit" 
+                            class="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition">
+                        Guardar Cambios
+                    </button>
+                    <a href="{% url 'contenido:mis_creaciones' %}" 
+                       class="flex-1 text-center bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl font-bold text-lg transition">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let seasonCounter = {{ temporadas_existentes.count|default:0 }} + 1;
+
+// Función para cargar lo que ya existe al abrir la página
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('seasons-container');
+    
+    {% for temp in temporadas_existentes %}
+        container.insertAdjacentHTML('beforeend', crearTemporadaHTML({{ temp.numero }}));
+        // Rellenar el título de la temporada
+        document.querySelector(`input[name="temporada_titulo_{{ temp.numero }}"]`).value = "{{ temp.titulo|default:'' }}";
+        
+        const epContainer = document.querySelector(`.episodes-container[data-season="{{ temp.numero }}"]`);
+        {% for ep in temp.episodios.all %}
+            epContainer.insertAdjacentHTML('beforeend', crearEpisodioHTML({{ temp.numero }}, {{ ep.numero }}));
+            // Rellenar campos del episodio
+            document.querySelector(`input[name="ep_titulo_{{ temp.numero }}_{{ ep.numero }}"]`).value = "{{ ep.titulo }}";
+            document.querySelector(`input[name="ep_duracion_{{ temp.numero }}_{{ ep.numero }}"]`).value = "{{ ep.duracion }}";
+            document.querySelector(`textarea[name="ep_desc_{{ temp.numero }}_{{ ep.numero }}"]`).value = "{{ ep.descripcion|escapejs }}";
+        {% endfor %}
+    {% endfor %}
+});
+
+// Funciones para crear temporada y episodio
+function crearTemporadaHTML(num) {
+    return `
+        <div class="season-card bg-zinc-900 border border-purple-700 rounded-2xl p-6" data-season="${num}">
+            <div class="flex justify-between mb-4">
+                <h3 class="text-xl font-bold">Temporada ${num}</h3>
+                <button type="button" class="remove-season text-red-400 hover:text-red-500">Eliminar</button>
+            </div>
+            <input type="text" name="temporada_titulo_${num}" placeholder="Título de la temporada (opcional)" 
+                   class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 mb-4">
+            <button type="button" class="add-episode-btn w-full bg-fuchsia-600 hover:bg-fuchsia-700 py-3 rounded-xl mb-4" 
+                    data-season="${num}">+ Agregar Episodio</button>
+            <div class="episodes-container space-y-4" data-season="${num}"></div>
+        </div>`;
+}
+
+function crearEpisodioHTML(seasonId, epNum) {
+    return `
+        <div class="episode-card bg-zinc-800 border border-purple-600/50 rounded-xl p-5">
+            <h4 class="font-semibold mb-3">Episodio ${epNum}</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="ep_titulo_${seasonId}_${epNum}" placeholder="Título del episodio" required 
+                       class="bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2">
+                <input type="number" name="ep_duracion_${seasonId}_${epNum}" placeholder="Duración (min)" 
+                       class="bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2">
+            </div>
+            <textarea name="ep_desc_${seasonId}_${epNum}" rows="2" placeholder="Descripción" 
+                      class="w-full mt-4 bg-zinc-900 border border-purple-600 rounded-lg px-4 py-2"></textarea>
+            <input type="file" name="ep_archivo_${seasonId}_${epNum}" class="w-full mt-3 text-sm">
+        </div>`;
+}
+
+// Inicializar botón de nueva temporada
+if (document.getElementById('add-season-btn')) {
+    document.getElementById('add-season-btn').addEventListener('click', () => {
+        const container = document.getElementById('seasons-container');
+        container.insertAdjacentHTML('beforeend', crearTemporadaHTML(seasonCounter));
+        seasonCounter++;
+    });
+}
+
+// Delegación de eventos
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-episode-btn')) {
+        const seasonId = e.target.dataset.season;
+        const container = document.querySelector(`.episodes-container[data-season="${seasonId}"]`);
+        const epNum = container.children.length + 1;
+        container.insertAdjacentHTML('beforeend', crearEpisodioHTML(seasonId, epNum));
+    }
+
+    if (e.target.classList.contains('remove-season')) {
+        if (confirm('¿Eliminar esta temporada y todos sus episodios?')) {
+            e.target.closest('.season-card').remove();
+        }
+    }
+});
+</script>
+{% endblock %}

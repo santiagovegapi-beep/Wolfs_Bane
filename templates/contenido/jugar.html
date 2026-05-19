@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Jugando - {{ contenido.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-wrapper {
+        background: #0a0a0a;
+        border: 3px solid #6b21a8;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 0 30px rgba(192, 38, 211, 0.4);
+    }
+
+    .game-header {
+        background: rgba(9, 9, 11, 0.95);
+        padding: 14px 24px;
+        border-bottom: 2px solid #7e22ce;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    iframe {
+        width: 100%;
+        height: 78vh;
+        border: none;
+        background: #000;
+    }
+
+        /* Scroll suave para los enlaces de ancla (ej: "Explorar Catálogo") */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Personalización de la barra de desplazamiento (Scrollbar) */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #09090b; /* zinc-950 (fondo de tu página) */
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #7e22ce; /* purple-600 */
+        border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a21caf; /* fuchsia-600 */
+    }
+
+    /* Efecto de texto neón mejorado */
+    .neon-text {
+        text-shadow: 
+            0 0 5px #c026d3, 
+            0 0 15px #c026d3, 
+            0 0 30px #8b21d1, 
+            0 0 50px #8b21d1;
+    }
+
+    /* Animación y sombreado para las tarjetas (Cards) */
+    .card-hover {
+        transition: all 0.3s ease-in-out;
+        border: 1px solid transparent;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-8px);
+        /* Le cambié la sombra negra por un brillo morado sutil */
+        box-shadow: 0 15px 30px -5px rgba(192, 38, 211, 0.25);
+        border-color: rgba(192, 38, 211, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Cabecera del juego -->
+    <div class="game-header rounded-t-2xl">
+        <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+            {{ contenido.titulo }}
+        </h1>
+        <a href="{% url 'contenido:detalle_contenido' contenido.id %}" 
+           class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-purple-400 hover:text-white transition">
+            ← Volver al Detalle
+        </a>
+    </div>
+
+    <!-- Área del juego -->
+    <div class="game-wrapper">
+        {% if juego.build_webgl or juego.archivo_juego %}
+            <iframe 
+                src="{% if juego.build_webgl %}{{ juego.build_webgl.url }}{% else %}{{ juego.archivo_juego.url }}{% endif %}"
+                allowfullscreen>
+            </iframe>
+        {% else %}
+            <div class="h-[78vh] flex items-center justify-center text-red-400 text-xl">
+                <div class="text-center">
+                    <p>No se encontró el build del juego</p>
+                    <p class="text-zinc-500 mt-2">El desarrollador aún no ha subido la versión WebGL</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Información adicional -->
+    <div class="mt-6 text-center text-zinc-400 text-sm">
+        Presiona <strong>F11</strong> para pantalla completa • Usa el ratón y teclado según el juego
+    </div>
+
+</div>
+{% endblock %}

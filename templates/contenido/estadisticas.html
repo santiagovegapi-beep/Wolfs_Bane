@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Estadísticas - {{ contenido.titulo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-4xl font-bold text-white mb-10">📊 Estadísticas de {{ contenido.titulo }}</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-zinc-900 rounded-2xl p-8 text-center border border-purple-700">
+            <p class="text-5xl font-bold text-emerald-400">{{ estadistica.descargas }}</p>
+            <p class="text-zinc-400 mt-2">Descargas</p>
+        </div>
+        <div class="bg-zinc-900 rounded-2xl p-8 text-center border border-purple-700">
+            <p class="text-5xl font-bold text-white">{{ contenido.calificacionPromedio|floatformat:1 }} ★</p>
+            <p class="text-zinc-400 mt-2">Calificación</p>
+        </div>
+    </div>
+
+    <div class="mt-12 text-center">
+        <a href="{% url 'contenido:detalle_contenido' contenido.id %}" 
+           class="inline-block bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-2xl font-bold">
+            Volver al Contenido
+        </a>
+    </div>
+</div>
+{% endblock %}

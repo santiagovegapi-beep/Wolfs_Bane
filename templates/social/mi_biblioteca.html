@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Biblioteca{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <!-- Título -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
+        
+        <div>
+            <h1 class="text-5xl font-bold text-purple-400">
+                Mi Biblioteca
+            </h1>
+
+            <p class="text-zinc-400 mt-3">
+                Tus juegos, películas y series guardadas.
+            </p>
+        </div>
+
+        <!-- Buscador -->
+        <form method="GET" class="flex flex-col md:flex-row gap-4">
+
+            <input type="text"
+                   name="q"
+                   value="{{ query }}"
+                   placeholder="Buscar contenido o creador..."
+                   class="bg-zinc-900 border border-purple-700 rounded-2xl px-5 py-3 text-white w-72 focus:outline-none focus:border-fuchsia-500">
+
+            <select name="tipo"
+                    class="bg-zinc-900 border border-purple-700 rounded-2xl px-5 py-3 text-white focus:outline-none">
+
+                <option value="">Todos</option>
+
+                <option value="videojuego"
+                    {% if tipo == 'videojuego' %}selected{% endif %}>
+                    Videojuegos
+                </option>
+
+                <option value="pelicula"
+                    {% if tipo == 'pelicula' %}selected{% endif %}>
+                    Películas
+                </option>
+
+                <option value="serie"
+                    {% if tipo == 'serie' %}selected{% endif %}>
+                    Series
+                </option>
+
+            </select>
+
+            <button type="submit"
+                    class="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-6 py-3 rounded-2xl font-semibold transition">
+                Buscar
+            </button>
+
+        </form>
+    </div>
+
+    <!-- Contenido -->
+    {% if page_obj %}
+
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+
+            {% for contenido in page_obj %}
+            <a href="{% url 'contenido:detalle_contenido' contenido.id %}"
+               class="bg-zinc-900 rounded-2xl overflow-hidden border border-purple-800 hover:border-fuchsia-500 transition hover:scale-[1.02]">
+
+                {% if contenido.portada %}
+                    <img src="{{ contenido.portada.url }}"
+                         class="w-full h-72 object-cover">
+                {% endif %}
+
+                <div class="p-5">
+
+                    <!-- Tipo -->
+                    <div class="mb-3">
+
+                        {% if contenido.videojuego %}
+                            <span class="bg-emerald-700 text-xs px-3 py-1 rounded-full">
+                                Videojuego
+                            </span>
+
+                        {% elif contenido.pelicula %}
+                            <span class="bg-red-700 text-xs px-3 py-1 rounded-full">
+                                Película
+                            </span>
+
+                        {% elif contenido.serie %}
+                            <span class="bg-blue-700 text-xs px-3 py-1 rounded-full">
+                                Serie
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    <h2 class="font-bold text-lg text-white">
+                        {{ contenido.titulo }}
+                    </h2>
+
+                    <p class="text-purple-400 text-sm mt-2">
+                        {{ contenido.creador.usuario.username }}
+                    </p>
+
+                    <p class="text-zinc-400 text-sm mt-2">
+                        {{ contenido.genero }}
+                    </p>
+
+                </div>
+            </a>
+            {% endfor %}
+
+        </div>
+
+        <!-- Paginación -->
+        <div class="flex justify-center mt-14 gap-3">
+
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&tipo={{ tipo }}"
+                   class="px-5 py-2 bg-zinc-800 rounded-xl hover:bg-zinc-700">
+                    ← Anterior
+                </a>
+            {% endif %}
+
+            <span class="px-5 py-2 bg-purple-700 rounded-xl">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&tipo={{ tipo }}"
+                   class="px-5 py-2 bg-zinc-800 rounded-xl hover:bg-zinc-700">
+                    Siguiente →
+                </a>
+            {% endif %}
+
+        </div>
+
+    {% else %}
+        <div class="text-center py-24">
+            <p class="text-zinc-400 text-2xl">
+                Tu biblioteca está vacía.
+            </p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

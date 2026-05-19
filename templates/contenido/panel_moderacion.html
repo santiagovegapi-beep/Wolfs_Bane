@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Moderación{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    <h1 class="text-4xl font-bold text-white mb-8 flex items-center gap-3">
+        Panel de Moderación
+    </h1>
+
+    <!-- Filtros -->
+    <div class="bg-zinc-900 rounded-2xl p-6 mb-10 border border-purple-900/50">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div class="md:col-span-4">
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar por título..." 
+                       class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white">
+            </div>
+            <div class="md:col-span-3">
+                <select name="genero" class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white">
+                    <option value="">Todos los géneros</option>
+                    {% for g in generos %}
+                    <option value="{{ g }}" {% if g == genero_seleccionado %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="md:col-span-3">
+                <select name="estado" class="w-full bg-zinc-800 border border-purple-600 rounded-xl px-5 py-3 text-white">
+                    <option value="">Todos</option>
+                    <option value="pendiente" {% if estado_seleccionado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                    <option value="aprobado" {% if estado_seleccionado == 'aprobado' %}selected{% endif %}>Aprobados</option>
+                    <option value="rechazado" {% if estado_seleccionado == 'rechazado' %}selected{% endif %}>Rechazados</option>
+                </select>
+            </div>
+            <div class="md:col-span-2">
+                <button type="submit" class="w-full h-full bg-purple-600 hover:bg-purple-700 rounded-xl font-bold">
+                    Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-zinc-900 rounded-2xl overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-zinc-800">
+                <tr>
+                    <th class="px-6 py-4 text-left">Título</th>
+                    <th class="px-6 py-4 text-left">Creador</th>
+                    <th class="px-6 py-4 text-left">Tipo</th>
+                    <th class="px-6 py-4 text-left">Género</th>
+                    <th class="px-6 py-4 text-center">Estado</th>
+                    <th class="px-6 py-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800">
+                {% for item in contenidos %}
+                <tr class="hover:bg-zinc-800/70">
+                    <td class="px-6 py-5 font-medium">{{ item.titulo }}</td>
+                    <td class="px-6 py-5">{{ item.creador.usuario.username }}</td>
+                    <td class="px-6 py-5">
+                        {% if item.videojuego %}Videojuego
+                        {% elif item.pelicula %}Película
+                        {% elif item.serie %}Serie{% endif %}
+                    </td>
+                    <td class="px-6 py-5">{{ item.genero|default:"—" }}</td>
+                    <td class="px-6 py-5 text-center">
+                        <span class="px-4 py-1 rounded-full text-xs font-medium
+                            {% if item.estadoAprobacion == 'aprobado' %}bg-emerald-900 text-emerald-400
+                            {% elif item.estadoAprobacion == 'pendiente' %}bg-yellow-900 text-yellow-400
+                            {% else %}bg-red-900 text-red-400{% endif %}">
+                            {{ item.get_estadoAprobacion_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-5 text-center space-x-4">
+                        <a href="{% url 'contenido:detalle_contenido' item.id %}" class="text-purple-400 hover:underline">Ver</a>
+                        
+                        {% if item.estadoAprobacion == 'pendiente' %}
+                        <a href="{% url 'contenido:aprobar_contenido' item.id %}" 
+                           class="text-emerald-400 hover:underline">Aprobar</a>
+                        <a href="{% url 'contenido:rechazar_contenido' item.id %}" 
+                           class="text-red-400 hover:underline">Rechazar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-16 text-zinc-400">No hay contenidos con los filtros seleccionados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

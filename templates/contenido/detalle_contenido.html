@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ contenido.titulo }} - Wolf's Bane{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Brillo Neón para las estrellas que ya están activas en la BD */
+.neon-star {
+    text-shadow: 0 0 15px rgba(240, 46, 170, 0.6), 0 0 5px rgba(240, 46, 170, 0.4);
+}
+
+/* --- Efecto Hover Dinámico con JavaScript de apoyo --- */
+/* Cambia el color temporalmente al pasar el mouse */
+.contenedor-estrellas-interactivas .star-btn.hover-active {
+    color: #e879f9 !important; /* Fuchsia claro */
+    text-shadow: 0 0 15px rgba(232, 121, 249, 0.8);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Portada + Título -->
+    <div class="flex flex-col lg:flex-row gap-10">
+        <div class="lg:w-2/5">
+            {% if contenido.portada %}
+                <img src="{{ contenido.portada.url }}" 
+                     class="w-full rounded-2xl shadow-2xl" alt="{{ contenido.titulo }}">
+            {% endif %}
+        </div>
+
+        <div class="lg:w-3/5">
+            <h1 class="text-5xl font-bold text-white mb-4">{{ contenido.titulo }}</h1>
+            <p class="text-purple-400 text-xl mb-6">
+                Creado por <strong>{{ contenido.creador.usuario.username }}</strong>
+            </p>
+
+            <!-- Precio (solo para videojuegos) -->
+            {% if tipo == 'videojuego' and contenido_especifico.precio > 0 %}
+                <div class="text-4xl font-bold text-emerald-400 mb-8">
+                    ${{ contenido_especifico.precio }}
+                </div>
+            {% endif %}
+
+            {% if user.is_authenticated and user.es_desarrollador %}
+                <a href="{% url 'social:agregar_biblioteca' contenido.id %}"
+                class="inline-block bg-zinc-800 hover:bg-zinc-700 border border-purple-600
+                        px-6 py-3 rounded-2xl font-semibold transition">
+
+                    {% if contenido in user.jugador.biblioteca.contenidos.all %}
+                        ❌ Quitar de Mi Biblioteca
+                    {% else %}
+                        ⭐ Agregar a Mi Biblioteca
+                    {% endif %}
+                </a>
+                <br><br>
+            {% endif %}
+            
+            <!-- Botones principales según tipo -->
+            <div class="flex flex-wrap gap-4">
+                {% if tipo == 'videojuego' %}
+                    {% if contenido.videojuego.archivo_descarga %}
+                        <a href="{{ contenido.videojuego.archivo_descarga.url }}" 
+                        class="inline-block bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-8 py-4 rounded-2xl text-xl font-bold transition flex items-center gap-3">
+                            Descargar Juego
+                        </a>
+                    {% elif contenido.archivo %}
+                        <a href="{{ contenido.archivo.url }}" 
+                        class="inline-block bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-8 py-4 rounded-2xl text-xl font-bold transition flex items-center gap-3">
+                            Descargar Juego
+                        </a>
+                    {% endif %}
+
+                {% elif tipo == 'pelicula' %}
+                    {# VERIFICACIÓN CRÍTICA AQUÍ #}
+                    {% if contenido.pelicula.archivo_pelicula %}
+                        <a href="{{ contenido.pelicula.archivo_pelicula.url }}" 
+                        class="inline-block bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-10 py-4 rounded-2xl text-xl font-bold transition flex items-center gap-3">
+                            Reproducir Película
+                        </a>
+                    {% elif contenido.archivo %}
+                        <a href="{{ contenido.archivo.url }}" 
+                        class="inline-block bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-10 py-4 rounded-2xl text-xl font-bold transition flex items-center gap-3">
+                            Reproducir Película
+                        </a>
+                    {% else %}
+                        <span class="text-zinc-400 italic">Archivo de película no disponible</span>
+                    {% endif %}
+
+                {% elif tipo == 'serie' %}
+                    <a href="#episodios-section" 
+                    class="inline-block bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 px-10 py-4 rounded-2xl text-xl font-bold transition flex items-center gap-3">
+                        Ver Temporadas y Episodios
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Descripción larga -->
+    <div class="mt-16">
+        <h2 class="text-3xl font-bold mb-6 text-purple-400">Descripción</h2>
+        <div class="prose prose-invert max-w-none text-zinc-300 leading-relaxed">
+            {{ contenido.descripcion|linebreaks }}
+        </div>
+    </div>
+
+    {% if tipo == 'serie' %}
+    <div id="episodios-section" class="mt-20">
+        <h2 class="text-3xl font-bold mb-8 text-purple-400">Temporadas y Episodios</h2>
+
+        {% for temporada in contenido.serie.temporadas.all %}
+        <div class="mb-12">
+            <h3 class="text-2xl font-semibold mb-6">{{ temporada }}</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for episodio in temporada.episodios.all %}
+                <div class="bg-zinc-900 rounded-2xl p-6 border border-purple-800 hover:border-fuchsia-500 transition">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold">E{{ episodio.numero }} — {{ episodio.titulo }}</h4>
+                        {% if episodio.duracion %}
+                            <span class="text-zinc-400">{{ episodio.duracion }} min</span>
+                        {% else %}
+                            <span class="text-zinc-500 text-xs italic">Procesando...</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if episodio.descripcion %}
+                        <p class="text-zinc-400 text-sm mt-3">{{ episodio.descripcion }}</p>
+                    {% endif %}
+
+                    {% if episodio.archivo %}
+                    <a href="{{ episodio.archivo.url }}" target="_blank"
+                    class="mt-6 block text-center bg-gradient-to-r from-purple-600 to-fuchsia-600 py-4 rounded-2xl font-bold">
+                        ▶ Reproducir Episodio
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ==================== REGISTRO DE DESARROLLO (Solo para Videojuegos) ==================== -->
+    {% if tipo == 'videojuego' and contenido_especifico.registros_desarrollo.exists %}
+    <div class="mt-20">
+        <h2 class="text-3xl font-bold mb-8 text-purple-400 flex items-center gap-3">
+            Registro de Desarrollo
+            <span class="text-sm bg-purple-900 px-3 py-1 rounded-full">
+                {{ contenido_especifico.registros_desarrollo.count }} publicaciones
+            </span>
+        </h2>
+        
+        <div class="space-y-8">
+            {% for registro in contenido_especifico.registros_desarrollo.all %}
+            <div class="bg-zinc-900 border border-purple-800 rounded-2xl p-7">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-xl font-semibold text-white">{{ registro.titulo }}</h3>
+                    <span class="text-zinc-500 text-sm">{{ registro.fecha|timesince }} atrás</span>
+                </div>
+                <div class="prose prose-invert text-zinc-300">
+                    {{ registro.contenido|linebreaks }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if contenido.videojuego %}
+            <a href="{{ contenido.archivo.url }}" class="btn-login p-3 rounded">
+                DESCARGAR Y JUGAR ({{ contenido.videojuego.version }})
+            </a>
+        {% endif %}
+
+        <div class="text-center mt-8">
+            <a href="#" class="text-purple-400 hover:text-purple-300 underline">
+                Ver todas las publicaciones →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Sección de Características (ejemplo para juegos) -->
+    {% if tipo == 'videojuego' %}
+    <div class="mt-20 grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div>
+            <h3 class="text-2xl font-semibold mb-6">Características</h3>
+            <ul class="space-y-4 text-zinc-300">
+                <li>Versión: <strong>{{ contenido_especifico.version }}</strong></li>
+                <li>Tamaño: <strong>{{ contenido_especifico.tamañoArchivo|default:"0" }} GB</strong></li>
+                <li>{{ contenido_especifico.precio|floatformat:2 }} USD</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="mt-10">
+        <h3 class="text-2xl font-bold text-purple-400 mb-4">Descargar</h3>
+
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-purple-700 space-y-4">
+
+            <div class="flex justify-between items-center">
+                <span>{{ contenido.titulo }}_v{{ contenido_especifico.version }}_PC</span>
+                <span class="text-purple-400">{{ contenido_especifico.tamañoArchivo }} GB</span>
+            </div>
+
+            <a href="{{ contenido.archivo.url }}"
+            class="block text-center bg-purple-600 hover:bg-purple-700 py-3 rounded-xl font-bold">
+                Descargar Archivo
+            </a>
+
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Calificar Contenido -->
+    {% if user.is_authenticated and request.user.jugador %}
+        <div class="mt-16 bg-zinc-900 rounded-3xl p-8 border border-purple-800 shadow-2xl max-w-xl mx-auto">
+            <h3 class="text-2xl font-bold mb-2 text-center text-purple-400">¿Qué te pareció este contenido?</h3>
+            
+            {% if calificacion_actual > 0 %}
+                <p class="text-xs text-zinc-400 text-center mb-6">
+                    Ya calificaste este contenido con <span class="text-fuchsia-400 font-bold">{{ calificacion_actual }} ★</span>. ¡Haz clic en otra estrella si deseas cambiarla!
+                </p>
+            {% else %}
+                <p class="text-xs text-zinc-400 text-center mb-6">Aún no has calificado este contenido. ¡Deja tu puntuación!</p>
+            {% endif %}
+            
+            <form method="POST" action="{% url 'contenido:calificar' contenido.id %}" class="flex flex-col items-center">
+                {% csrf_token %}
+                <div class="flex gap-2 text-6xl mb-6 contenedor-estrellas-interactivas">
+                    {% for i in "12345"|make_list %}
+                        {# Convertimos 'i' a entero usando |add:0 para comparar correctamente con calificacion_actual #}
+                        {% with click_valor=i|add:0 %}
+                            <button type="submit" name="puntuacion" value="{{ i }}" 
+                                    data-index="{{ i }}"
+                                    class="star-btn transition-all duration-200 hover:scale-125 {% if calificacion_actual >= click_valor %}text-fuchsia-500 neon-star{% else %}text-zinc-600{% endif %}">
+                                ★
+                            </button>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </form>
+            
+            <div class="border-t border-purple-900/40 pt-4 mt-2 text-center text-sm text-zinc-400">
+                Calificación promedio de la comunidad: 
+                <strong class="text-fuchsia-400 font-bold text-base ml-1">
+                    {{ contenido.calificacionPromedio|floatformat:1 }} ★
+                </strong> 
+                <span class="text-zinc-500 text-xs ml-1">({{ total_comentarios }} votos)</span>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Formulario para agregar comentario -->
+    <div class="mt-16 bg-zinc-900 rounded-3xl p-8 border border-purple-800">
+        <h3 class="text-2xl font-bold mb-6 text-purple-400">Deja un comentario</h3>
+        
+        {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'contenido:agregar_comentario' contenido.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="contenido_id" value="{{ contenido.id }}">
+                
+                <textarea name="comentario" 
+                        rows="4"
+                        class="w-full bg-zinc-800 border border-purple-600 rounded-2xl p-5 text-white resize-y min-h-[120px] focus:outline-none focus:border-purple-400"
+                        placeholder="¿Qué te pareció este contenido? Sé respetuoso..."></textarea>
+                
+                <button type="submit"
+                        class="mt-6 px-8 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 rounded-2xl font-semibold transition">
+                    Publicar Comentario
+                </button>
+            </form>
+        {% else %}
+            <p class="text-zinc-400">
+                <a href="{% url 'usuarios:login' %}" class="text-purple-400 hover:underline">Inicia sesión</a> 
+                para dejar un comentario.
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- ==================== COMENTARIOS ==================== -->
+    <div class="mt-20">
+        <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+            Comentarios 
+            <span class="text-sm bg-purple-900 px-3 py-1 rounded-full">{{ total_comentarios }}</span>
+        </h2>
+
+        <div id="comentarios-list" class="space-y-8">
+            {% for comentario in comentarios %}
+            <div class="bg-zinc-900 rounded-2xl p-6 border border-purple-900/30">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-purple-700 rounded-full flex items-center justify-center font-bold">
+                        {{ comentario.jugador.usuario.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <strong>{{ comentario.jugador.usuario.username }}</strong>
+                        <span class="text-zinc-500 text-sm ml-3">
+                            {{ comentario.fecha|timesince }} atrás
+                        </span>
+                    </div>
+                </div>
+                <p class="text-zinc-300 leading-relaxed">{{ comentario.contenido_texto }}</p>
+            </div>
+            {% empty %}
+                <p class="text-zinc-500 text-center py-10">Aún no hay comentarios. ¡Sé el primero!</p>
+            {% endfor %}
+        </div>
+
+        {% if total_comentarios > 10 %}
+        <div class="text-center mt-10">
+            <button onclick="cargarMasComentarios({{ contenido.id }})" 
+                    id="btn-ver-mas"
+                    class="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 border border-purple-600 rounded-2xl font-medium transition">
+                Ver más comentarios ({{ total_comentarios|add:"-10" }} restantes)
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cargarMasComentarios(contenidoId) {
+    const btn = document.getElementById('btn-ver-mas');
+    btn.innerHTML = 'Cargando...';
+    btn.disabled = true;
+
+    fetch(`/contenido/${contenidoId}/comentarios/mas/`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('comentarios-list');
+            data.comentarios.forEach(comentario => {
+                const div = document.createElement('div');
+                div.className = "bg-zinc-900 rounded-2xl p-6 border border-purple-900/30";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-10 h-10 bg-purple-700 rounded-full flex items-center justify-center font-bold">
+                            ${comentario.username[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <strong>${comentario.username}</strong>
+                            <span class="text-zinc-500 text-sm ml-3">${comentario.fecha}</span>
+                        </div>
+                    </div>
+                    <p class="text-zinc-300">${comentario.texto}</p>
+                `;
+                container.appendChild(div);
+            });
+            btn.style.display = 'none';
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const contenedor = document.querySelector('.contenedor-estrellas-interactivas');
+    if (!contenedor) return;
+
+    const estrellas = container.querySelectorAll('.star-btn');
+
+    estrellas.forEach(star => {
+        // Al pasar el cursor por encima
+        star.addEventListener('mouseenter', function() {
+            const targetIndex = parseInt(this.getAttribute('data-index'));
+            estrellas.forEach(s => {
+                const currentIndex = parseInt(s.getAttribute('data-index'));
+                if (currentIndex <= targetIndex) {
+                    s.classList.add('hover-active');
+                } else {
+                    s.classList.remove('hover-active');
+                }
+            });
+        });
+    });
+
+    // Al quitar el cursor del contenedor de estrellas, se restaura el diseño original
+    contenedor.addEventListener('mouseleave', function() {
+        estrellas.forEach(s => s.classList.remove('hover-active'));
+    });
+});
+</script>
+{% endblock %}
